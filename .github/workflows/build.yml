@@ -1,1 +1,45 @@
+name: Gerar APK ADAILSON TECK TV
 
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '*.zip'
+      - '.github/workflows/build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Extrair projeto
+        run: |
+          ZIP_FILE="$(find . -maxdepth 1 -name '*.zip' -type f | head -n 1)"
+          mkdir -p projeto
+          unzip -o "$ZIP_FILE" -d projeto
+
+      - name: Compilar APK
+        run: |
+          PROJECT_DIR="$(find projeto -name settings.gradle.kts -type f -printf '%h\n' | head -n 1)"
+          test -n "$PROJECT_DIR"
+          gradle -p "$PROJECT_DIR" assembleDebug
+          echo "APK_DIR=$PROJECT_DIR/app/build/outputs/apk/debug" >> "$GITHUB_ENV"
+
+      - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ADAILSON-TECK-TV-APK
+          path: ${{ env.APK_DIR }}/*.apk
