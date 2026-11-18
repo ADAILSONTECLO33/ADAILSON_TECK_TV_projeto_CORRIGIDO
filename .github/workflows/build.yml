@@ -1,3 +1,4 @@
+
 name: Gerar APK ADAILSON TECK TV
 
 on:
@@ -21,16 +22,22 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Preparar Gradle 8.9
+      - name: Preparar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Preparar Gradle 8.13
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
+          gradle-version: '8.13'
 
       - name: Extrair projeto
         run: |
           ZIP_FILE="$(find . -maxdepth 1 -type f -name '*.zip' | head -n 1)"
           if [ -z "$ZIP_FILE" ]; then
-            echo "ERRO: nenhum arquivo ZIP encontrado na raiz do repositório."
+            echo "ERRO: nenhum ZIP encontrado."
             exit 1
           fi
           mkdir -p projeto
@@ -40,12 +47,10 @@ jobs:
         run: |
           PROJECT_DIR="$(find projeto -name settings.gradle.kts -type f -printf '%h\n' | head -n 1)"
           if [ -z "$PROJECT_DIR" ]; then
-            echo "ERRO: não encontrei settings.gradle.kts dentro do ZIP."
-            find projeto -maxdepth 4 -type f
+            echo "ERRO: projeto Android não encontrado."
             exit 1
           fi
-          echo "Projeto encontrado em: $PROJECT_DIR"
-          gradle -p "$PROJECT_DIR" assembleDebug
+          gradle -p "$PROJECT_DIR" --no-daemon assembleDebug
           echo "APK_DIR=$PROJECT_DIR/app/build/outputs/apk/debug" >> "$GITHUB_ENV"
 
       - name: Guardar APK
@@ -54,4 +59,3 @@ jobs:
           name: ADAILSON-TECK-TV-APK
           path: ${{ env.APK_DIR }}/*.apk
           if-no-files-found: error
-          
